@@ -77,6 +77,34 @@ class Enemy {
     }
 }
 
+class Particle {
+    constructor(x, y, radius, colour, v) {
+        this.x = x,
+        this.y = y,
+        this.radius = radius, 
+        this.colour = colour,
+        this.v = v
+        this.alpha = 1
+    }
+    draw() {
+        c.save()
+        c.globalAlpha = this.alpha
+        c.beginPath()
+        c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
+        c.fillStyle = this.colour
+        c.fill()
+        c.restore()
+
+    }
+    update() {
+        this.draw()
+        this.alpha -= 0.01
+        this.x = this.x + this.v.x
+        this.y = this.y + this.v.y
+
+    }
+}
+
 
 // creates and draws player in center of screen
 const player = new Player(x, y, 15, "white")
@@ -89,6 +117,8 @@ function spwnEnemy() {
     setInterval(() => {
         //random radius of enemies
         const r = Math.random() * (35 - 5) + 5
+
+        
 
         let x
         let y
@@ -111,16 +141,18 @@ function spwnEnemy() {
             canvas.width / 2 - x
         )
 
+        
+
         //velocities for enemy to be at to reach player
         const velocity = {
-            x: Math.cos(angle) * 2.5,
-            y: Math.sin(angle) * 2.5
+            x: Math.cos(angle) * 2.2,
+            y: Math.sin(angle) * 2.2 
         }
 
         //pushing enemy onto array enemy array
         enemyArr.push(new Enemy(x, y, r, colour, velocity))
 
-    }, 400);
+    }, 550);
 }
 
 
@@ -138,6 +170,13 @@ function animate() {
     c.fillRect(0, 0, canvas.width, canvas.height)
     // player is redrawn every loop of the animation
     player.draw()
+    particleArr.forEach((particle, particleIndex) => {
+        particle.update()
+
+        if(particle.alpha < 0) {
+            particleArr.splice(particleIndex, 1)
+        }
+    })
 
 
     // looping through projectiles array and calling its instance of update()
@@ -169,10 +208,23 @@ function animate() {
         // projectile and enemy collisiion logic.
         projectileArr.forEach((projectile, index) => {
             const dist = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y)
+
             
-            setTimeout(() => {
                 if (dist - enemy.radius - projectile.radius < 1) {
-                    
+
+                    for (let i = 0; i <= enemy.radius; i++) {
+                        particleArr.push(new Particle (
+                            projectile.x, 
+                            projectile.y,
+                            2,
+                            enemy.colour,
+                            {
+                                x: (Math.random() - 0.5) * 6,
+                                y: (Math.random() - 0.5) * 6
+                            }
+                            ))
+                    }
+
                     if (enemy.radius - 10 > 15) {
                         gsap.to(enemy, {
                             radius: enemy.radius - 10
@@ -180,7 +232,7 @@ function animate() {
                         setTimeout(() => {
                             projectileArr.splice(index, 1)
                         }, 0);
-                        
+
                         score += 15
                         points.innerHTML = score
 
@@ -194,8 +246,8 @@ function animate() {
                         points.innerHTML = score
                     }
                 }
-                // 0ms so it executes straight away rather than waiting for the next frame
-            }, 0);
+                
+            
 
 
         })
